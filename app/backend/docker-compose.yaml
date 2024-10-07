@@ -1,0 +1,116 @@
+services:
+    # all services tagged with name langgraph-ai-agents will be added to the demo network
+    postgres-langgraph-ai-agents:
+        image: 'postgres:16-alpine'
+        networks:
+            demo: null
+            qocsgo88cogcg4kosw8g4gc4: null
+        restart: unless-stopped
+        ports:
+            - '5436:5432'
+        environment:
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_DB
+        volumes:
+            - 'langgraph-postgres_storage:/var/lib/postgresql/data'
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}'
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+        container_name: postgres-langgraph-01
+        env_file:
+            - .env
+
+    qdrant-langgraph-ai-agents:
+        image: qdrant/qdrant
+        container_name: qdrant-langgraph-01
+        networks:
+            demo: null
+            qocsgo88cogcg4kosw8g4gc4: null
+        restart: unless-stopped
+        ports:
+            - '6336:6333'
+        volumes:
+            - 'langgraph-qdrant_storage:/qdrant/storage'
+
+        env_file:
+            - .env
+    ollama-cpu-langgraph-ai-agents:
+        profiles:
+            - cpu
+        image: 'ollama/ollama:latest'
+        container_name: ollama-cpu-langgraph-01
+        networks:
+            demo: null
+            qocsgo88cogcg4kosw8g4gc4: null
+        restart: unless-stopped
+        ports:
+            - '11444:11434'
+        volumes:
+            - 'langgraph-ollama_storage:/root/.ollama'
+
+        env_file:
+            - .env
+
+    ollama-pull-llama-cpu-langgraph-ai-agents:
+        profiles:
+            - cpu
+        image: 'ollama/ollama:latest'
+        networks:
+            demo: null
+            qocsgo88cogcg4kosw8g4gc4: null
+        container_name: ollama-pull-llama-cpu-langgraph-01
+        volumes:
+            - 'langgraph-ollama_storage:/root/.ollama'
+        entrypoint: /bin/sh
+        command:
+            - '-c'
+            # - 'sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.1; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text'
+            - 'sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.1:8b; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text'
+            # - 'sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.2:3b; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text'
+        depends_on:
+            - ollama-cpu
+
+        restart: unless-stopped
+        env_file:
+            - .env
+    backend-langgraph-ai-agents:
+      image: langgraph/backend:latest
+      container_name: backend-langgraph-01
+      build:
+        context: ./
+        dockerfile: Dockerfile
+      ports:
+        - "8000:8000"
+      environment:
+        - POSTGRES_USER: 'postgres'
+        - POSTGRES_PASSWORD: postgres
+        - POSTGRES_DB: langgraph
+        - POSTGRES_HOST: postgres
+        - QDRANT_HOST: qdrant
+        - QDRANT_PORT: 6333
+        - QDRANT_API_KEY: ${QDRANT_API_KEY}
+        - QDRANT_API_KEY: ${QDRANT_API_KEY}
+        - QDRANT_COLLECTION_NAME: langgraph
+
+volumes:
+    langgraph-postgres_storage:
+        name: langgraph-postgres_storage
+    # langgraph-n8n_storage:
+    #     name: langgraph-n8n_storage
+    langgraph-qdrant_storage:
+        name: langgraph-qdrant_storage
+    langgraph-ollama_storage:
+        name: langgraph-ollama_storage
+networks:
+    demo: null
+    langgraph:
+        name: langgraph
+        external: true
+configs: {  }
+secrets: {  }
