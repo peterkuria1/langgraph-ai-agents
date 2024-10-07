@@ -5,6 +5,16 @@ import asyncio
 
 import os
 
+from utils.prompt_template import primary_assistant_prompt
+
+from langchain_ollama import ChatOllama
+from langgraph.graph import StateGraph, END, START
+from langgraph.prebuilt import ToolNode, tools_condition
+# from langgraph.checkpoint.sqlite import SqliteSaver
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 # Initialize Quart app
 app = Quart(__name__)
@@ -34,6 +44,16 @@ async def run_workflow(inputs):
     Asynchronously runs the workflow based on the provided inputs.
     """
     value = await session['workflow'].ainvoke(inputs)
+
+    # sqlite3_conn = sqlite3.connect('checkpoints.sqlite')
+    # sqlite3_memory_checkpoint = SqliteSaver(sqlite3_conn)
+    # app = workflow.compile(checkpointer=sqlite3_memory_checkpoint)
+    # final_state = app.invoke(
+    #     {"messages": [HumanMessage(content='give me a few names of people who were pivotal in eradication of global slave trade. ')]},
+    #     config={"configurable": {"thread_id": 1}}
+    # )
+
+
     return value
 
 
