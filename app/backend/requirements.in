@@ -22,3 +22,8 @@ langchain-text-splitters
 
 bs4
 pysqlite3-binary
+
+# https://github.com/langchain-ai/langgraph/issues/1274
+# from langgraph.checkpoint.sqlite import SqliteSaver
+# ModuleNotFoundError: No module named 'langgraph.checkpoint.sqlite'
+langgraph-checkpoint-sqlite
